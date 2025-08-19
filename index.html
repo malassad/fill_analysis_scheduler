@@ -814,7 +814,14 @@
             try {
                 updateSyncStatus('syncing', 'Loading from Azure...');
                 const url = getAzureBlobUrl(config);
-                const response = await fetch(url);
+                
+                // First, try to get the blob
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'x-ms-blob-type': 'BlockBlob'
+                    }
+                });
                 
                 if (response.ok) {
                     const data = await response.json();
@@ -822,10 +829,17 @@
                     return data;
                 } else if (response.status === 404) {
                     // Blob doesn't exist yet, create it with sample data
-                    await saveToAzure(sampleBrands, config);
-                    updateSyncStatus('synced', 'Initialized Azure storage');
-                    return sampleBrands;
+                    console.log('Blob not found, creating initial data...');
+                    const saved = await saveToAzure(sampleBrands, config);
+                    if (saved) {
+                        updateSyncStatus('synced', 'Initialized Azure storage');
+                        return sampleBrands;
+                    } else {
+                        throw new Error('Failed to initialize Azure storage');
+                    }
                 } else {
+                    const errorText = await response.text();
+                    console.error('Azure load failed:', response.status, errorText);
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
             } catch (error) {
@@ -846,15 +860,18 @@
                     method: 'PUT',
                     headers: {
                         'x-ms-blob-type': 'BlockBlob',
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'x-ms-blob-content-type': 'application/json'
                     },
-                    body: JSON.stringify(brandsData)
+                    body: JSON.stringify(brandsData, null, 2)
                 });
                 
-                if (response.ok) {
+                if (response.ok || response.status === 201) {
                     updateSyncStatus('synced', 'Synced with Azure');
                     return true;
                 } else {
+                    const errorText = await response.text();
+                    console.error('Azure save failed:', response.status, errorText);
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
             } catch (error) {
@@ -1015,6 +1032,27 @@
                 // Ensure SAS token starts with ?
                 if (!config.sasToken.startsWith('?')) {
                     config.sasToken = '?' + config.sasToken;
+                }
+                
+                // Test the connection
+                updateSyncStatus('syncing', 'Testing connection...');
+                const testUrl = `https://${config.storageAccount}.blob.core.windows.net/${config.containerName}${config.sasToken}&restype=container&comp=list&maxresults=1`;
+                
+                try {
+                    const testResponse = await fetch(testUrl);
+                    if (!testResponse.ok) {
+                        const errorText = await testResponse.text();
+                        console.error('Connection test failed:', testResponse.status, errorText);
+                        alert(`Connection test failed: ${testResponse.status} ${testResponse.statusText}\n\nCheck console for details.`);
+                        updateSyncStatus('error', 'Connection test failed');
+                        return;
+                    }
+                    console.log('Connection test successful!');
+                } catch (error) {
+                    console.error('Connection test error:', error);
+                    alert(`Connection test failed: ${error.message}\n\nThis might be a CORS issue. Check console for details.`);
+                    updateSyncStatus('error', 'Connection test failed');
+                    return;
                 }
             }
             
