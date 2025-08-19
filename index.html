@@ -878,14 +878,60 @@
             yearSelect.value = currentYear;
         }
         
-        // Export data
+        // Export data as CSV
         function exportData() {
-            const dataStr = JSON.stringify(brands, null, 2);
-            const dataBlob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(dataBlob);
+            // CSV headers
+            const headers = ['Brand Name', 'Launch Date', 'Contracted Messages', 'Investment', 'Program Duration', 'JIRA Ticket', 'Last Analysis', 'Next Analysis', 'Status', 'Days Until'];
+            
+            // Generate rows
+            const rows = brands.map(brand => {
+                const status = getAnalysisStatus(brand);
+                let daysUntil = 'N/A';
+                
+                if (brand.nextAnalysisDate) {
+                    const [year, month, day] = brand.nextAnalysisDate.split('-').map(num => parseInt(num));
+                    const nextAnalysis = new Date(year, month - 1, day, 12, 0, 0);
+                    const today = new Date();
+                    today.setHours(12, 0, 0, 0);
+                    const diffTime = nextAnalysis - today;
+                    daysUntil = Math.round(diffTime / (1000 * 60 * 60 * 24));
+                }
+                
+                return [
+                    brand.name,
+                    brand.launchDate || '',
+                    brand.contractedMessages || '',
+                    brand.investment || '',
+                    brand.programDuration || '',
+                    brand.jiraTicket || '',
+                    brand.lastAnalysis || 'Not yet analyzed',
+                    brand.nextAnalysisDate || 'Not scheduled',
+                    status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' '),
+                    daysUntil
+                ];
+            });
+            
+            // Convert to CSV format
+            const csvContent = [
+                headers.join(','),
+                ...rows.map(row => 
+                    row.map(cell => {
+                        // Escape quotes and wrap in quotes if contains comma
+                        const cellStr = String(cell);
+                        if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+                            return `"${cellStr.replace(/"/g, '""')}"`;
+                        }
+                        return cellStr;
+                    }).join(',')
+                )
+            ].join('\n');
+            
+            // Download CSV
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `fill-analysis-data-${new Date().toISOString().split('T')[0]}.json`;
+            link.download = `fill-analysis-schedule-${new Date().toISOString().split('T')[0]}.csv`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -1191,7 +1237,10 @@
             // Count analyses for each day
             brands.forEach(brand => {
                 if (brand.nextAnalysisDate) {
-                    const nextAnalysis = new Date(brand.nextAnalysisDate);
+                    // Parse the date string properly
+                    const [y, m, d] = brand.nextAnalysisDate.split('-').map(num => parseInt(num));
+                    const nextAnalysis = new Date(y, m - 1, d, 12, 0, 0);
+                    
                     if (nextAnalysis.getMonth() === month && 
                         nextAnalysis.getFullYear() === year) {
                         const day = nextAnalysis.getDate();
