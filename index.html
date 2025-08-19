@@ -208,12 +208,6 @@
             background: linear-gradient(135deg, #fff 0%, #f0fff4 100%);
         }
         
-        .brand-card.one-time-done {
-            border-color: #9f7aea;
-            background: linear-gradient(135deg, #fff 0%, #faf5ff 100%);
-            opacity: 0.8;
-        }
-        
         .brand-header {
             display: flex;
             justify-content: space-between;
@@ -227,41 +221,13 @@
             color: #333;
         }
         
-        .status-badge {
+        .jira-badge {
+            background: #e0e7ff;
+            color: #3730a3;
             padding: 4px 12px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: 600;
-            text-transform: uppercase;
-        }
-        
-        .status-active {
-            background: #c6f6d5;
-            color: #276749;
-        }
-        
-        .status-pending {
-            background: #feebc8;
-            color: #7c2d12;
-        }
-        
-        .status-inactive {
-            background: #fed7d7;
-            color: #742a2a;
-        }
-        
-        .frequency-badge {
-            background: #e0e7ff;
-            color: #3730a3;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            margin-left: 8px;
-        }
-        
-        .one-time-badge {
-            background: #fbb6ce;
-            color: #702459;
         }
         
         .brand-details {
@@ -401,17 +367,6 @@
             font-size: 12px;
         }
         
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        
-        .checkbox-group input[type="checkbox"] {
-            width: auto;
-        }
-        
         .form-actions {
             display: flex;
             gap: 10px;
@@ -467,10 +422,6 @@
             position: relative;
             background: #fafafa;
             overflow: hidden;
-        }
-        
-        .calendar-day.monday {
-            border-left: 3px solid #667eea;
         }
         
         .calendar-day.has-analysis {
@@ -562,7 +513,7 @@
         </div>
         
         <h1>Fill Analysis Scheduler</h1>
-        <p class="subtitle">Track and manage fill analysis schedules for all brand programs</p>
+        <p class="subtitle">Schedule and track fill analyses for all brand programs</p>
         
         <div class="setup-notice" id="setupNotice">
             <h3>⚠️ Azure Storage Not Configured</h3>
@@ -587,15 +538,9 @@
                 <select id="statusFilter" onchange="filterBrands()">
                     <option value="all">All Statuses</option>
                     <option value="overdue">Overdue</option>
-                    <option value="upcoming">Upcoming</option>
-                    <option value="completed">Recently Completed</option>
-                    <option value="one-time-done">Completed One-Time</option>
-                </select>
-                <select id="renewalFilter" onchange="filterBrands()">
-                    <option value="all">All Renewals</option>
-                    <option value="active">Active</option>
-                    <option value="pending">Pending</option>
-                    <option value="inactive">Inactive</option>
+                    <option value="upcoming">Upcoming (7 days)</option>
+                    <option value="scheduled">Scheduled</option>
+                    <option value="no-date">No Date Set</option>
                 </select>
                 <input type="text" id="searchFilter" placeholder="Search brands..." onkeyup="filterBrands()">
             </div>
@@ -647,43 +592,31 @@
                     <input type="date" id="launchDate" required>
                 </div>
                 <div class="form-group">
-                    <label for="messagesPerMonth">Approx. Messages per Month</label>
-                    <input type="number" id="messagesPerMonth" min="0" required>
+                    <label for="contractedMessages">Contracted Messages</label>
+                    <input type="number" id="contractedMessages" min="0" required>
+                    <small style="color: #666;">Total number of messages in contract</small>
+                </div>
+                <div class="form-group">
+                    <label for="investment">Investment</label>
+                    <input type="text" id="investment" placeholder="$50,000">
+                </div>
+                <div class="form-group">
+                    <label for="programDuration">Program Duration</label>
+                    <input type="text" id="programDuration" placeholder="6 months, 1 year, etc.">
+                </div>
+                <div class="form-group">
+                    <label for="jiraTicket">Analytics JIRA Ticket</label>
+                    <input type="text" id="jiraTicket" placeholder="ANALYTICS-1234">
                 </div>
                 <div class="form-group">
                     <label for="lastAnalysis">Date of Last Fill Analysis</label>
                     <input type="date" id="lastAnalysis">
-                    <small style="color: #666;">Leave empty for first analysis</small>
+                    <small style="color: #666;">Leave empty if not yet analyzed</small>
                 </div>
                 <div class="form-group">
-                    <label for="renewalStatus">Program Renewal Status</label>
-                    <select id="renewalStatus" required>
-                        <option value="active">Active</option>
-                        <option value="pending">Pending</option>
-                        <option value="inactive">Inactive</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Analysis Type</label>
-                    <select id="analysisType" onchange="toggleFrequencyOptions()">
-                        <option value="recurring">Recurring</option>
-                        <option value="one-time">One-Time</option>
-                    </select>
-                </div>
-                <div class="form-group" id="frequencyGroup">
-                    <label for="analysisFrequency">Analysis Frequency</label>
-                    <select id="analysisFrequency">
-                        <option value="3-months">Every 3 Months</option>
-                        <option value="6-months">Every 6 Months</option>
-                        <option value="12-months">Every 12 Months</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="nextAnalysisDate">Next Analysis Date (Monday)</label>
-                    <select id="nextAnalysisDate" style="width: 100%;">
-                        <option value="">Automatic (based on frequency)</option>
-                    </select>
-                    <small style="color: #666; display: block; margin-top: 5px;">All analyses are scheduled on Mondays</small>
+                    <label for="nextAnalysisDate">Next Analysis Date</label>
+                    <input type="date" id="nextAnalysisDate">
+                    <small style="color: #666;">Pick any date - schedule on demand</small>
                 </div>
                 <div class="form-actions">
                     <button type="button" class="btn" style="background: #ccc;" onclick="closeModal()">Cancel</button>
@@ -751,34 +684,34 @@
                 id: 1,
                 name: "Brand Alpha",
                 launchDate: "2024-01-15",
-                messagesPerMonth: 2500,
+                contractedMessages: 30000,
+                investment: "$150,000",
+                programDuration: "12 months",
                 lastAnalysis: "2024-10-14",
-                renewalStatus: "active",
-                analysisType: "recurring",
-                analysisFrequency: "3-months",
-                nextAnalysisDate: null
+                nextAnalysisDate: "2025-01-15",
+                jiraTicket: "ANALYTICS-1001"
             },
             {
                 id: 2,
                 name: "Brand Beta",
                 launchDate: "2024-03-01",
-                messagesPerMonth: 1800,
+                contractedMessages: 20000,
+                investment: "$75,000",
+                programDuration: "6 months",
                 lastAnalysis: null,
-                renewalStatus: "active",
-                analysisType: "one-time",
-                analysisFrequency: null,
-                nextAnalysisDate: "2025-02-03"
+                nextAnalysisDate: "2025-02-10",
+                jiraTicket: "ANALYTICS-1002"
             },
             {
                 id: 3,
                 name: "Brand Gamma",
                 launchDate: "2023-11-20",
-                messagesPerMonth: 3200,
+                contractedMessages: 50000,
+                investment: "$200,000",
+                programDuration: "18 months",
                 lastAnalysis: "2024-08-19",
-                renewalStatus: "pending",
-                analysisType: "recurring",
-                analysisFrequency: "6-months",
-                nextAnalysisDate: null
+                nextAnalysisDate: null,
+                jiraTicket: ""
             }
         ];
         
@@ -1063,75 +996,20 @@
             await loadBrands();
         });
         
-        // Get the next Monday from a given date
-        function getNextMonday(date) {
-            const d = new Date(date);
-            const day = d.getDay();
-            const diff = day === 0 ? 1 : (8 - day) % 7 || 7;
-            d.setDate(d.getDate() + diff);
-            return d;
-        }
-        
-        // Calculate next analysis date based on frequency
-        function getNextAnalysisDate(brand) {
-            // For one-time analyses that are completed
-            if (brand.analysisType === 'one-time' && brand.lastAnalysis) {
-                return null; // No next analysis
-            }
-            
-            // If custom date is set and it's in the future, use it
-            if (brand.nextAnalysisDate) {
-                const customDate = new Date(brand.nextAnalysisDate);
-                if (customDate > new Date()) {
-                    return customDate;
-                }
-            }
-            
-            // For one-time analyses without custom date
-            if (brand.analysisType === 'one-time') {
-                // Schedule 3 months from launch if no date specified
-                const baseDate = new Date(brand.launchDate);
-                baseDate.setMonth(baseDate.getMonth() + 3);
-                return getNextMonday(baseDate);
-            }
-            
-            // For recurring analyses
-            const baseDate = brand.lastAnalysis ? new Date(brand.lastAnalysis) : new Date(brand.launchDate);
-            let nextDate = new Date(baseDate);
-            
-            switch (brand.analysisFrequency) {
-                case '3-months':
-                    nextDate.setMonth(nextDate.getMonth() + 3);
-                    break;
-                case '6-months':
-                    nextDate.setMonth(nextDate.getMonth() + 6);
-                    break;
-                case '12-months':
-                    nextDate.setMonth(nextDate.getMonth() + 12);
-                    break;
-                default:
-                    nextDate.setMonth(nextDate.getMonth() + 3); // Default to quarterly
-            }
-            
-            return getNextMonday(nextDate);
-        }
-        
         // Get analysis status
         function getAnalysisStatus(brand) {
-            // One-time analyses that are done
-            if (brand.analysisType === 'one-time' && brand.lastAnalysis) {
-                return 'one-time-done';
-            }
-            
-            const nextAnalysis = getNextAnalysisDate(brand);
-            if (!nextAnalysis) return 'one-time-done';
+            if (!brand.nextAnalysisDate) return 'no-date';
             
             const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const nextAnalysis = new Date(brand.nextAnalysisDate);
+            nextAnalysis.setHours(0, 0, 0, 0);
+            
             const daysUntil = Math.ceil((nextAnalysis - today) / (1000 * 60 * 60 * 24));
             
             if (daysUntil < 0) return 'overdue';
             if (daysUntil <= 7) return 'upcoming';
-            return 'completed';
+            return 'scheduled';
         }
         
         // Render brands
@@ -1141,27 +1019,40 @@
             
             grid.innerHTML = filteredBrands.map(brand => {
                 const status = getAnalysisStatus(brand);
-                const nextAnalysis = getNextAnalysisDate(brand);
-                const daysUntil = nextAnalysis ? Math.ceil((nextAnalysis - new Date()) / (1000 * 60 * 60 * 24)) : null;
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
                 
-                const frequencyLabels = {
-                    '3-months': '3 Months',
-                    '6-months': '6 Months',
-                    '12-months': '12 Months'
-                };
+                let statusText = '';
+                let statusColor = '#666';
                 
-                const frequencyBadge = brand.analysisType === 'one-time' 
-                    ? '<span class="frequency-badge one-time-badge">One-Time</span>'
-                    : `<span class="frequency-badge">Every ${frequencyLabels[brand.analysisFrequency]}</span>`;
+                if (brand.nextAnalysisDate) {
+                    const nextAnalysis = new Date(brand.nextAnalysisDate);
+                    nextAnalysis.setHours(0, 0, 0, 0);
+                    const daysUntil = Math.ceil((nextAnalysis - today) / (1000 * 60 * 60 * 24));
+                    
+                    if (daysUntil < 0) {
+                        statusText = `${Math.abs(daysUntil)} days overdue`;
+                        statusColor = '#e53e3e';
+                    } else if (daysUntil === 0) {
+                        statusText = 'Today';
+                        statusColor = '#f6ad55';
+                    } else if (daysUntil === 1) {
+                        statusText = 'Tomorrow';
+                        statusColor = '#f6ad55';
+                    } else {
+                        statusText = `${daysUntil} days away`;
+                        statusColor = daysUntil <= 7 ? '#f6ad55' : '#48bb78';
+                    }
+                } else {
+                    statusText = 'No date scheduled';
+                    statusColor = '#666';
+                }
                 
                 return `
                     <div class="brand-card ${status}">
                         <div class="brand-header">
-                            <div>
-                                <span class="brand-name">${brand.name}</span>
-                                ${frequencyBadge}
-                            </div>
-                            <div class="status-badge status-${brand.renewalStatus}">${brand.renewalStatus}</div>
+                            <div class="brand-name">${brand.name}</div>
+                            ${brand.jiraTicket ? `<div class="jira-badge">${brand.jiraTicket}</div>` : ''}
                         </div>
                         <div class="brand-details">
                             <div class="detail-row">
@@ -1169,8 +1060,16 @@
                                 <span class="detail-value">${formatDate(brand.launchDate)}</span>
                             </div>
                             <div class="detail-row">
-                                <span class="detail-label">Monthly Messages:</span>
-                                <span class="detail-value">${brand.messagesPerMonth.toLocaleString()}</span>
+                                <span class="detail-label">Contracted Messages:</span>
+                                <span class="detail-value">${brand.contractedMessages ? brand.contractedMessages.toLocaleString() : 'N/A'}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Investment:</span>
+                                <span class="detail-value">${brand.investment || 'N/A'}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Program Duration:</span>
+                                <span class="detail-value">${brand.programDuration || 'N/A'}</span>
                             </div>
                             <div class="detail-row">
                                 <span class="detail-label">Last Analysis:</span>
@@ -1178,14 +1077,14 @@
                             </div>
                             <div class="detail-row">
                                 <span class="detail-label">Next Analysis:</span>
-                                <span class="detail-value" style="color: ${status === 'one-time-done' ? '#9f7aea' : daysUntil < 0 ? '#e53e3e' : daysUntil <= 7 ? '#f6ad55' : '#48bb78'}">
-                                    ${status === 'one-time-done' ? 'Completed (One-Time)' : nextAnalysis ? `${formatDate(nextAnalysis)} (${Math.abs(daysUntil)} days ${daysUntil < 0 ? 'overdue' : 'away'})` : 'N/A'}
+                                <span class="detail-value" style="color: ${statusColor}">
+                                    ${brand.nextAnalysisDate ? `${formatDate(brand.nextAnalysisDate)} (${statusText})` : statusText}
                                 </span>
                             </div>
                         </div>
                         <div class="action-buttons">
                             <button class="btn btn-edit" onclick="editBrand(${brand.id})">Edit</button>
-                            ${status !== 'one-time-done' ? `<button class="btn btn-analyze" onclick="markAnalyzed(${brand.id})">Mark Analyzed</button>` : ''}
+                            <button class="btn btn-analyze" onclick="markAnalyzed(${brand.id})">Mark Analyzed</button>
                             <button class="btn btn-delete" onclick="deleteBrand(${brand.id})">Delete</button>
                         </div>
                     </div>
@@ -1196,15 +1095,17 @@
         // Filter brands
         function getFilteredBrands() {
             const statusFilter = document.getElementById('statusFilter').value;
-            const renewalFilter = document.getElementById('renewalFilter').value;
             const searchFilter = document.getElementById('searchFilter').value.toLowerCase();
             
             return brands.filter(brand => {
                 const status = getAnalysisStatus(brand);
                 
                 if (statusFilter !== 'all' && status !== statusFilter) return false;
-                if (renewalFilter !== 'all' && brand.renewalStatus !== renewalFilter) return false;
-                if (searchFilter && !brand.name.toLowerCase().includes(searchFilter)) return false;
+                if (searchFilter && 
+                    !brand.name.toLowerCase().includes(searchFilter) &&
+                    !(brand.jiraTicket && brand.jiraTicket.toLowerCase().includes(searchFilter))) {
+                    return false;
+                }
                 
                 return true;
             });
@@ -1219,34 +1120,6 @@
             const date = new Date(dateString);
             const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
             return `${days[date.getDay()]}, ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-        }
-        
-        // Toggle frequency options
-        function toggleFrequencyOptions() {
-            const analysisType = document.getElementById('analysisType').value;
-            document.getElementById('frequencyGroup').style.display = analysisType === 'recurring' ? 'block' : 'none';
-            populateNextAnalysisOptions();
-        }
-        
-        // Populate next analysis date options (Mondays only)
-        function populateNextAnalysisOptions() {
-            const select = document.getElementById('nextAnalysisDate');
-            select.innerHTML = '<option value="">Automatic (based on frequency)</option>';
-            
-            // Add Monday options for the next 12 months
-            const today = new Date();
-            let currentDate = getNextMonday(today);
-            
-            for (let i = 0; i < 52; i++) { // Show next 52 Mondays (1 year)
-                const option = document.createElement('option');
-                option.value = currentDate.toISOString().split('T')[0];
-                option.textContent = formatDate(currentDate);
-                select.appendChild(option);
-                
-                // Move to next Monday
-                currentDate = new Date(currentDate);
-                currentDate.setDate(currentDate.getDate() + 7);
-            }
         }
         
         // Change calendar month
@@ -1305,19 +1178,16 @@
             
             // Count analyses for each day
             brands.forEach(brand => {
-                if (brand.analysisType === 'one-time' && brand.lastAnalysis) {
-                    return; // Skip completed one-time analyses
-                }
-                
-                const nextAnalysis = getNextAnalysisDate(brand);
-                if (nextAnalysis && 
-                    nextAnalysis.getMonth() === month && 
-                    nextAnalysis.getFullYear() === year) {
-                    const day = nextAnalysis.getDate();
-                    if (!analysesPerDay[day]) {
-                        analysesPerDay[day] = [];
+                if (brand.nextAnalysisDate) {
+                    const nextAnalysis = new Date(brand.nextAnalysisDate);
+                    if (nextAnalysis.getMonth() === month && 
+                        nextAnalysis.getFullYear() === year) {
+                        const day = nextAnalysis.getDate();
+                        if (!analysesPerDay[day]) {
+                            analysesPerDay[day] = [];
+                        }
+                        analysesPerDay[day].push(brand.name);
                     }
-                    analysesPerDay[day].push(brand.name);
                 }
             });
             
@@ -1326,11 +1196,6 @@
                 const date = new Date(year, month, day);
                 const dayDiv = document.createElement('div');
                 dayDiv.className = 'calendar-day';
-                
-                // Mark Mondays
-                if (date.getDay() === 1) {
-                    dayDiv.classList.add('monday');
-                }
                 
                 const dayNumber = document.createElement('div');
                 dayNumber.className = 'day-number';
@@ -1369,9 +1234,6 @@
             editingId = null;
             document.getElementById('modalTitle').textContent = 'Add New Brand';
             document.getElementById('brandForm').reset();
-            document.getElementById('analysisType').value = 'recurring';
-            document.getElementById('analysisFrequency').value = '3-months';
-            toggleFrequencyOptions();
             document.getElementById('brandModal').style.display = 'flex';
         }
         
@@ -1383,12 +1245,11 @@
             document.getElementById('modalTitle').textContent = 'Edit Brand';
             document.getElementById('brandName').value = brand.name;
             document.getElementById('launchDate').value = brand.launchDate;
-            document.getElementById('messagesPerMonth').value = brand.messagesPerMonth;
+            document.getElementById('contractedMessages').value = brand.contractedMessages || 0;
+            document.getElementById('investment').value = brand.investment || '';
+            document.getElementById('programDuration').value = brand.programDuration || '';
+            document.getElementById('jiraTicket').value = brand.jiraTicket || '';
             document.getElementById('lastAnalysis').value = brand.lastAnalysis || '';
-            document.getElementById('renewalStatus').value = brand.renewalStatus;
-            document.getElementById('analysisType').value = brand.analysisType || 'recurring';
-            document.getElementById('analysisFrequency').value = brand.analysisFrequency || '3-months';
-            toggleFrequencyOptions();
             document.getElementById('nextAnalysisDate').value = brand.nextAnalysisDate || '';
             document.getElementById('brandModal').style.display = 'flex';
         }
@@ -1410,14 +1271,13 @@
         async function markAnalyzed(id) {
             const brand = brands.find(b => b.id === id);
             if (brand) {
-                // Set last analysis to the most recent Monday
+                // Set last analysis to today
                 const today = new Date();
-                const lastMonday = new Date(today);
-                const daysSinceMonday = (today.getDay() + 6) % 7;
-                lastMonday.setDate(today.getDate() - daysSinceMonday);
+                brand.lastAnalysis = today.toISOString().split('T')[0];
                 
-                brand.lastAnalysis = lastMonday.toISOString().split('T')[0];
-                brand.nextAnalysisDate = null; // Clear custom date
+                // Clear next analysis date (they'll need to schedule the next one manually)
+                brand.nextAnalysisDate = null;
+                
                 await saveBrands();
                 renderBrands();
                 updateCalendar();
@@ -1431,11 +1291,11 @@
             const brandData = {
                 name: document.getElementById('brandName').value,
                 launchDate: document.getElementById('launchDate').value,
-                messagesPerMonth: parseInt(document.getElementById('messagesPerMonth').value),
+                contractedMessages: parseInt(document.getElementById('contractedMessages').value) || 0,
+                investment: document.getElementById('investment').value.trim(),
+                programDuration: document.getElementById('programDuration').value.trim(),
+                jiraTicket: document.getElementById('jiraTicket').value.trim(),
                 lastAnalysis: document.getElementById('lastAnalysis').value || null,
-                renewalStatus: document.getElementById('renewalStatus').value,
-                analysisType: document.getElementById('analysisType').value,
-                analysisFrequency: document.getElementById('analysisType').value === 'recurring' ? document.getElementById('analysisFrequency').value : null,
                 nextAnalysisDate: document.getElementById('nextAnalysisDate').value || null
             };
             
