@@ -51,7 +51,12 @@
             flex-wrap: wrap;
         }
         
-        .add-brand-btn {
+        .primary-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .add-brand-btn, .export-btn, .import-btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
@@ -63,7 +68,11 @@
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
         
-        .add-brand-btn:hover {
+        .export-btn, .import-btn {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        }
+        
+        .add-brand-btn:hover, .export-btn:hover, .import-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         }
@@ -122,6 +131,12 @@
             background: linear-gradient(135deg, #fff 0%, #f0fff4 100%);
         }
         
+        .brand-card.one-time-done {
+            border-color: #9f7aea;
+            background: linear-gradient(135deg, #fff 0%, #faf5ff 100%);
+            opacity: 0.8;
+        }
+        
         .brand-header {
             display: flex;
             justify-content: space-between;
@@ -158,13 +173,18 @@
             color: #742a2a;
         }
         
-        .recurring-badge {
+        .frequency-badge {
             background: #e0e7ff;
             color: #3730a3;
             padding: 2px 8px;
             border-radius: 12px;
             font-size: 11px;
             margin-left: 8px;
+        }
+        
+        .one-time-badge {
+            background: #fbb6ce;
+            color: #702459;
         }
         
         .brand-details {
@@ -413,46 +433,35 @@
             text-overflow: ellipsis;
         }
         
-        .week-summary {
-            margin-top: 20px;
-            padding: 15px;
+        .data-instructions {
             background: #f7fafc;
-            border-radius: 8px;
-        }
-        
-        .week-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-        }
-        
-        .week-item {
-            padding: 10px;
-            background: white;
-            border-radius: 8px;
             border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 30px;
         }
         
-        .week-item.high-volume {
-            background: #fee;
-            border-color: #e53e3e;
-        }
-        
-        .week-header {
-            font-weight: 600;
+        .data-instructions h3 {
             color: #333;
-            margin-bottom: 5px;
-            font-size: 14px;
+            margin-bottom: 15px;
         }
         
-        .week-count {
-            font-size: 20px;
-            font-weight: bold;
-            color: #667eea;
+        .data-instructions p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 10px;
         }
         
-        .week-count.warning {
-            color: #e53e3e;
+        .data-instructions code {
+            background: #edf2f7;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 13px;
+        }
+        
+        .hidden {
+            display: none;
         }
         
         @media (max-width: 768px) {
@@ -466,6 +475,11 @@
             
             .controls {
                 flex-direction: column;
+            }
+            
+            .primary-buttons {
+                flex-direction: column;
+                width: 100%;
             }
             
             .filter-controls {
@@ -482,16 +496,24 @@
 <body>
     <div class="container">
         <h1>Fill Analysis Scheduler</h1>
-        <p class="subtitle">Track and manage fill analysis schedules for all brand programs (Weekly basis - Mondays)</p>
+        <p class="subtitle">Track and manage fill analysis schedules for all brand programs</p>
         
         <div class="controls">
-            <button class="add-brand-btn" onclick="openAddModal()">+ Add New Brand</button>
+            <div class="primary-buttons">
+                <button class="add-brand-btn" onclick="openAddModal()">+ Add New Brand</button>
+                <button class="export-btn" onclick="exportData()">Export Data</button>
+                <label for="importFile" class="import-btn" style="cursor: pointer;">
+                    Import Data
+                    <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(event)">
+                </label>
+            </div>
             <div class="filter-controls">
                 <select id="statusFilter" onchange="filterBrands()">
                     <option value="all">All Statuses</option>
                     <option value="overdue">Overdue</option>
                     <option value="upcoming">Upcoming</option>
                     <option value="completed">Recently Completed</option>
+                    <option value="one-time-done">Completed One-Time</option>
                 </select>
                 <select id="renewalFilter" onchange="filterBrands()">
                     <option value="all">All Renewals</option>
@@ -529,7 +551,23 @@
                 </div>
             </div>
             <div class="calendar-grid" id="calendarGrid"></div>
-            <div class="week-summary" id="weekSummary"></div>
+        </div>
+        
+        <div class="data-instructions">
+            <h3>📁 Data Storage Options</h3>
+            <p><strong>For SharePoint:</strong></p>
+            <p>1. Export your data using the "Export Data" button</p>
+            <p>2. Save the JSON file to a SharePoint document library</p>
+            <p>3. Share the file link with your team members</p>
+            <p>4. Team members can download and import using "Import Data"</p>
+            
+            <p style="margin-top: 15px;"><strong>For Confluence:</strong></p>
+            <p>1. Export your data and attach the JSON file to a Confluence page</p>
+            <p>2. Or create a Code Block macro with <code>json</code> language and paste the exported data</p>
+            <p>3. Team members can copy the JSON and save as a file to import</p>
+            
+            <p style="margin-top: 15px;"><strong>Auto-sync Option:</strong></p>
+            <p>For automatic syncing, consider hosting the JSON file on a web server and modifying the code to fetch from a URL on load.</p>
         </div>
     </div>
     
@@ -567,20 +605,26 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Analysis Frequency</label>
-                    <select id="analysisFrequency" onchange="toggleScheduleOptions()">
-                        <option value="weekly">Weekly (Every Monday)</option>
-                        <option value="biweekly">Bi-weekly (Every 2 Mondays)</option>
-                        <option value="monthly">Monthly (First Monday)</option>
-                        <option value="quarterly">Quarterly (First Monday)</option>
+                    <label>Analysis Type</label>
+                    <select id="analysisType" onchange="toggleFrequencyOptions()">
+                        <option value="recurring">Recurring</option>
+                        <option value="one-time">One-Time</option>
                     </select>
-                    <div id="customDateGroup" style="margin-top: 15px;">
-                        <label for="nextAnalysisDate">Next Analysis Monday</label>
-                        <select id="nextAnalysisDate" style="width: 100%;">
-                            <option value="">Automatic (based on frequency)</option>
-                        </select>
-                        <small style="color: #666; display: block; margin-top: 5px;">All analyses are scheduled on Mondays</small>
-                    </div>
+                </div>
+                <div class="form-group" id="frequencyGroup">
+                    <label for="analysisFrequency">Analysis Frequency</label>
+                    <select id="analysisFrequency">
+                        <option value="3-months">Every 3 Months</option>
+                        <option value="6-months">Every 6 Months</option>
+                        <option value="12-months">Every 12 Months</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="nextAnalysisDate">Next Analysis Date (Monday)</label>
+                    <select id="nextAnalysisDate" style="width: 100%;">
+                        <option value="">Automatic (based on frequency)</option>
+                    </select>
+                    <small style="color: #666; display: block; margin-top: 5px;">All analyses are scheduled on Mondays</small>
                 </div>
                 <div class="form-actions">
                     <button type="button" class="btn" style="background: #ccc;" onclick="closeModal()">Cancel</button>
@@ -617,7 +661,8 @@
                 messagesPerMonth: 2500,
                 lastAnalysis: "2024-10-14",
                 renewalStatus: "active",
-                analysisFrequency: "weekly",
+                analysisType: "recurring",
+                analysisFrequency: "3-months",
                 nextAnalysisDate: null
             },
             {
@@ -627,18 +672,20 @@
                 messagesPerMonth: 1800,
                 lastAnalysis: null,
                 renewalStatus: "active",
-                analysisFrequency: "biweekly",
-                nextAnalysisDate: null
+                analysisType: "one-time",
+                analysisFrequency: null,
+                nextAnalysisDate: "2025-02-03"
             },
             {
                 id: 3,
                 name: "Brand Gamma",
                 launchDate: "2023-11-20",
                 messagesPerMonth: 3200,
-                lastAnalysis: "2024-11-18",
+                lastAnalysis: "2024-08-19",
                 renewalStatus: "pending",
-                analysisFrequency: "quarterly",
-                nextAnalysisDate: "2025-02-03"
+                analysisType: "recurring",
+                analysisFrequency: "6-months",
+                nextAnalysisDate: null
             }
         ];
         
@@ -646,11 +693,6 @@
         function loadBrands() {
             const stored = localStorage.getItem('fillAnalysisBrands');
             brands = stored ? JSON.parse(stored) : sampleBrands;
-            // Migrate old data
-            brands = brands.map(brand => ({
-                ...brand,
-                analysisFrequency: brand.analysisFrequency || (brand.recurringMonthly ? 'monthly' : 'quarterly')
-            }));
             renderBrands();
             updateCalendar();
         }
@@ -658,6 +700,48 @@
         // Save brands to localStorage
         function saveBrands() {
             localStorage.setItem('fillAnalysisBrands', JSON.stringify(brands));
+        }
+        
+        // Export data
+        function exportData() {
+            const dataStr = JSON.stringify(brands, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `fill-analysis-data-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+        
+        // Import data
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (Array.isArray(importedData)) {
+                        if (confirm('This will replace all existing data. Continue?')) {
+                            brands = importedData;
+                            saveBrands();
+                            renderBrands();
+                            updateCalendar();
+                            alert('Data imported successfully!');
+                        }
+                    } else {
+                        alert('Invalid data format');
+                    }
+                } catch (error) {
+                    alert('Error importing data: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Reset file input
         }
         
         // Get the next Monday from a given date
@@ -669,14 +753,13 @@
             return d;
         }
         
-        // Get the first Monday of a month
-        function getFirstMonday(year, month) {
-            const firstDay = new Date(year, month, 1);
-            return getNextMonday(new Date(year, month, 1 - firstDay.getDay()));
-        }
-        
         // Calculate next analysis date based on frequency
         function getNextAnalysisDate(brand) {
+            // For one-time analyses that are completed
+            if (brand.analysisType === 'one-time' && brand.lastAnalysis) {
+                return null; // No next analysis
+            }
+            
             // If custom date is set and it's in the future, use it
             if (brand.nextAnalysisDate) {
                 const customDate = new Date(brand.nextAnalysisDate);
@@ -685,89 +768,46 @@
                 }
             }
             
+            // For one-time analyses without custom date
+            if (brand.analysisType === 'one-time') {
+                // Schedule 3 months from launch if no date specified
+                const baseDate = new Date(brand.launchDate);
+                baseDate.setMonth(baseDate.getMonth() + 3);
+                return getNextMonday(baseDate);
+            }
+            
+            // For recurring analyses
             const baseDate = brand.lastAnalysis ? new Date(brand.lastAnalysis) : new Date(brand.launchDate);
-            let nextDate;
+            let nextDate = new Date(baseDate);
             
             switch (brand.analysisFrequency) {
-                case 'weekly':
-                    nextDate = new Date(baseDate);
-                    nextDate.setDate(nextDate.getDate() + 7);
-                    return getNextMonday(nextDate);
-                    
-                case 'biweekly':
-                    nextDate = new Date(baseDate);
-                    nextDate.setDate(nextDate.getDate() + 14);
-                    return getNextMonday(nextDate);
-                    
-                case 'monthly':
-                    nextDate = new Date(baseDate);
-                    nextDate.setMonth(nextDate.getMonth() + 1);
-                    return getFirstMonday(nextDate.getFullYear(), nextDate.getMonth());
-                    
-                case 'quarterly':
-                default:
-                    nextDate = new Date(baseDate);
+                case '3-months':
                     nextDate.setMonth(nextDate.getMonth() + 3);
-                    return getFirstMonday(nextDate.getFullYear(), nextDate.getMonth());
-            }
-        }
-        
-        // Get all Monday dates in a month
-        function getMondaysInMonth(year, month) {
-            const mondays = [];
-            const date = new Date(year, month, 1);
-            
-            // Find first Monday
-            while (date.getDay() !== 1) {
-                date.setDate(date.getDate() + 1);
-            }
-            
-            // Get all Mondays in the month
-            while (date.getMonth() === month) {
-                mondays.push(new Date(date));
-                date.setDate(date.getDate() + 7);
-            }
-            
-            return mondays;
-        }
-        
-        // Get week number in month for a date
-        function getWeekOfMonth(date) {
-            const firstMonday = getFirstMonday(date.getFullYear(), date.getMonth());
-            return Math.floor((date.getDate() - firstMonday.getDate()) / 7) + 1;
-        }
-        
-        // Check if analysis should occur on this Monday
-        function shouldAnalyzeOnMonday(brand, monday) {
-            const lastAnalysis = brand.lastAnalysis ? new Date(brand.lastAnalysis) : new Date(brand.launchDate);
-            
-            if (monday <= lastAnalysis) return false;
-            
-            switch (brand.analysisFrequency) {
-                case 'weekly':
-                    return true;
-                    
-                case 'biweekly':
-                    const weeksSince = Math.floor((monday - lastAnalysis) / (7 * 24 * 60 * 60 * 1000));
-                    return weeksSince > 0 && weeksSince % 2 === 0;
-                    
-                case 'monthly':
-                    return getWeekOfMonth(monday) === 1;
-                    
-                case 'quarterly':
-                    // Check if it's the first Monday of a quarter month
-                    const quarterMonths = [0, 3, 6, 9]; // Jan, Apr, Jul, Oct
-                    return getWeekOfMonth(monday) === 1 && quarterMonths.includes(monday.getMonth());
-                    
+                    break;
+                case '6-months':
+                    nextDate.setMonth(nextDate.getMonth() + 6);
+                    break;
+                case '12-months':
+                    nextDate.setMonth(nextDate.getMonth() + 12);
+                    break;
                 default:
-                    return false;
+                    nextDate.setMonth(nextDate.getMonth() + 3); // Default to quarterly
             }
+            
+            return getNextMonday(nextDate);
         }
         
         // Get analysis status
         function getAnalysisStatus(brand) {
-            const today = new Date();
+            // One-time analyses that are done
+            if (brand.analysisType === 'one-time' && brand.lastAnalysis) {
+                return 'one-time-done';
+            }
+            
             const nextAnalysis = getNextAnalysisDate(brand);
+            if (!nextAnalysis) return 'one-time-done';
+            
+            const today = new Date();
             const daysUntil = Math.ceil((nextAnalysis - today) / (1000 * 60 * 60 * 24));
             
             if (daysUntil < 0) return 'overdue';
@@ -783,21 +823,24 @@
             grid.innerHTML = filteredBrands.map(brand => {
                 const status = getAnalysisStatus(brand);
                 const nextAnalysis = getNextAnalysisDate(brand);
-                const daysUntil = Math.ceil((nextAnalysis - new Date()) / (1000 * 60 * 60 * 24));
+                const daysUntil = nextAnalysis ? Math.ceil((nextAnalysis - new Date()) / (1000 * 60 * 60 * 24)) : null;
                 
                 const frequencyLabels = {
-                    'weekly': 'Weekly',
-                    'biweekly': 'Bi-weekly',
-                    'monthly': 'Monthly',
-                    'quarterly': 'Quarterly'
+                    '3-months': '3 Months',
+                    '6-months': '6 Months',
+                    '12-months': '12 Months'
                 };
+                
+                const frequencyBadge = brand.analysisType === 'one-time' 
+                    ? '<span class="frequency-badge one-time-badge">One-Time</span>'
+                    : `<span class="frequency-badge">Every ${frequencyLabels[brand.analysisFrequency]}</span>`;
                 
                 return `
                     <div class="brand-card ${status}">
                         <div class="brand-header">
                             <div>
                                 <span class="brand-name">${brand.name}</span>
-                                <span class="recurring-badge">${frequencyLabels[brand.analysisFrequency]}</span>
+                                ${frequencyBadge}
                             </div>
                             <div class="status-badge status-${brand.renewalStatus}">${brand.renewalStatus}</div>
                         </div>
@@ -812,18 +855,18 @@
                             </div>
                             <div class="detail-row">
                                 <span class="detail-label">Last Analysis:</span>
-                                <span class="detail-value">${brand.lastAnalysis ? formatDate(brand.lastAnalysis) : 'First Analysis'}</span>
+                                <span class="detail-value">${brand.lastAnalysis ? formatDate(brand.lastAnalysis) : 'Not yet analyzed'}</span>
                             </div>
                             <div class="detail-row">
                                 <span class="detail-label">Next Analysis:</span>
-                                <span class="detail-value" style="color: ${daysUntil < 0 ? '#e53e3e' : daysUntil <= 7 ? '#f6ad55' : '#48bb78'}">
-                                    ${formatDate(nextAnalysis)} (${Math.abs(daysUntil)} days ${daysUntil < 0 ? 'overdue' : 'away'})
+                                <span class="detail-value" style="color: ${status === 'one-time-done' ? '#9f7aea' : daysUntil < 0 ? '#e53e3e' : daysUntil <= 7 ? '#f6ad55' : '#48bb78'}">
+                                    ${status === 'one-time-done' ? 'Completed (One-Time)' : nextAnalysis ? `${formatDate(nextAnalysis)} (${Math.abs(daysUntil)} days ${daysUntil < 0 ? 'overdue' : 'away'})` : 'N/A'}
                                 </span>
                             </div>
                         </div>
                         <div class="action-buttons">
                             <button class="btn btn-edit" onclick="editBrand(${brand.id})">Edit</button>
-                            <button class="btn btn-analyze" onclick="markAnalyzed(${brand.id})">Mark Analyzed</button>
+                            ${status !== 'one-time-done' ? `<button class="btn btn-analyze" onclick="markAnalyzed(${brand.id})">Mark Analyzed</button>` : ''}
                             <button class="btn btn-delete" onclick="deleteBrand(${brand.id})">Delete</button>
                         </div>
                     </div>
@@ -859,22 +902,23 @@
             return `${days[date.getDay()]}, ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
         }
         
-        // Toggle schedule options
-        function toggleScheduleOptions() {
+        // Toggle frequency options
+        function toggleFrequencyOptions() {
+            const analysisType = document.getElementById('analysisType').value;
+            document.getElementById('frequencyGroup').style.display = analysisType === 'recurring' ? 'block' : 'none';
             populateNextAnalysisOptions();
         }
         
         // Populate next analysis date options (Mondays only)
         function populateNextAnalysisOptions() {
             const select = document.getElementById('nextAnalysisDate');
-            const frequency = document.getElementById('analysisFrequency').value;
             select.innerHTML = '<option value="">Automatic (based on frequency)</option>';
             
-            // Add Monday options for the next 3 months
+            // Add Monday options for the next 12 months
             const today = new Date();
             let currentDate = getNextMonday(today);
             
-            for (let i = 0; i < 12; i++) {
+            for (let i = 0; i < 52; i++) { // Show next 52 Mondays (1 year)
                 const option = document.createElement('option');
                 option.value = currentDate.toISOString().split('T')[0];
                 option.textContent = formatDate(currentDate);
@@ -937,20 +981,24 @@
                 calendarGrid.appendChild(emptyDay);
             }
             
-            // Get all Mondays in the month
-            const mondays = getMondaysInMonth(year, month);
-            const weekAnalyses = {};
+            // Track analyses per day
+            const analysesPerDay = {};
             
-            // Count analyses for each Monday
-            mondays.forEach((monday, weekIndex) => {
-                const brandsThisWeek = brands.filter(brand => {
-                    const nextAnalysis = getNextAnalysisDate(brand);
-                    return nextAnalysis.toDateString() === monday.toDateString() ||
-                           (brand.analysisFrequency && shouldAnalyzeOnMonday(brand, monday));
-                });
+            // Count analyses for each day
+            brands.forEach(brand => {
+                if (brand.analysisType === 'one-time' && brand.lastAnalysis) {
+                    return; // Skip completed one-time analyses
+                }
                 
-                if (brandsThisWeek.length > 0) {
-                    weekAnalyses[weekIndex] = brandsThisWeek;
+                const nextAnalysis = getNextAnalysisDate(brand);
+                if (nextAnalysis && 
+                    nextAnalysis.getMonth() === month && 
+                    nextAnalysis.getFullYear() === year) {
+                    const day = nextAnalysis.getDate();
+                    if (!analysesPerDay[day]) {
+                        analysesPerDay[day] = [];
+                    }
+                    analysesPerDay[day].push(brand.name);
                 }
             });
             
@@ -970,10 +1018,9 @@
                 dayNumber.textContent = day;
                 dayDiv.appendChild(dayNumber);
                 
-                // Check if this is a Monday with analyses
-                const mondayIndex = mondays.findIndex(m => m.getDate() === day);
-                if (mondayIndex !== -1 && weekAnalyses[mondayIndex]) {
-                    const count = weekAnalyses[mondayIndex].length;
+                // Check if this day has analyses
+                if (analysesPerDay[day]) {
+                    const count = analysesPerDay[day].length;
                     dayDiv.classList.add(count > 8 ? 'high-volume' : 'has-analysis');
                     
                     // Add count badge
@@ -986,42 +1033,16 @@
                     // Add brand list
                     const brandList = document.createElement('div');
                     brandList.className = 'day-brands';
-                    const brandNames = weekAnalyses[mondayIndex].map(b => b.name);
-                    brandList.textContent = brandNames.slice(0, 2).join(', ');
-                    if (brandNames.length > 2) {
-                        brandList.textContent += `... +${brandNames.length - 2}`;
+                    brandList.textContent = analysesPerDay[day].slice(0, 2).join(', ');
+                    if (analysesPerDay[day].length > 2) {
+                        brandList.textContent += `... +${analysesPerDay[day].length - 2}`;
                     }
-                    brandList.title = brandNames.join('\n');
+                    brandList.title = analysesPerDay[day].join('\n');
                     dayDiv.appendChild(brandList);
                 }
                 
                 calendarGrid.appendChild(dayDiv);
             }
-            
-            // Update week summary
-            updateWeekSummary(mondays, weekAnalyses);
-        }
-        
-        // Update week summary
-        function updateWeekSummary(mondays, weekAnalyses) {
-            const summaryDiv = document.getElementById('weekSummary');
-            
-            const weekItems = mondays.map((monday, index) => {
-                const count = weekAnalyses[index] ? weekAnalyses[index].length : 0;
-                const weekNum = getWeekOfMonth(monday);
-                
-                return `
-                    <div class="week-item ${count > 8 ? 'high-volume' : ''}">
-                        <div class="week-header">Week ${weekNum} (${formatDate(monday).split(',')[1].trim()})</div>
-                        <div class="week-count ${count > 8 ? 'warning' : ''}">${count} analyses</div>
-                    </div>
-                `;
-            }).join('');
-            
-            summaryDiv.innerHTML = `
-                <h3 style="margin-bottom: 15px; color: #333;">Weekly Analysis Summary</h3>
-                <div class="week-grid">${weekItems}</div>
-            `;
         }
         
         // Modal functions
@@ -1029,8 +1050,9 @@
             editingId = null;
             document.getElementById('modalTitle').textContent = 'Add New Brand';
             document.getElementById('brandForm').reset();
-            document.getElementById('analysisFrequency').value = 'quarterly';
-            populateNextAnalysisOptions();
+            document.getElementById('analysisType').value = 'recurring';
+            document.getElementById('analysisFrequency').value = '3-months';
+            toggleFrequencyOptions();
             document.getElementById('brandModal').style.display = 'flex';
         }
         
@@ -1045,8 +1067,9 @@
             document.getElementById('messagesPerMonth').value = brand.messagesPerMonth;
             document.getElementById('lastAnalysis').value = brand.lastAnalysis || '';
             document.getElementById('renewalStatus').value = brand.renewalStatus;
-            document.getElementById('analysisFrequency').value = brand.analysisFrequency || 'quarterly';
-            populateNextAnalysisOptions();
+            document.getElementById('analysisType').value = brand.analysisType || 'recurring';
+            document.getElementById('analysisFrequency').value = brand.analysisFrequency || '3-months';
+            toggleFrequencyOptions();
             document.getElementById('nextAnalysisDate').value = brand.nextAnalysisDate || '';
             document.getElementById('brandModal').style.display = 'flex';
         }
@@ -1092,7 +1115,8 @@
                 messagesPerMonth: parseInt(document.getElementById('messagesPerMonth').value),
                 lastAnalysis: document.getElementById('lastAnalysis').value || null,
                 renewalStatus: document.getElementById('renewalStatus').value,
-                analysisFrequency: document.getElementById('analysisFrequency').value,
+                analysisType: document.getElementById('analysisType').value,
+                analysisFrequency: document.getElementById('analysisType').value === 'recurring' ? document.getElementById('analysisFrequency').value : null,
                 nextAnalysisDate: document.getElementById('nextAnalysisDate').value || null
             };
             
