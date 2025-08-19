@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fill Analysis Scheduler</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .add-brand-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .add-brand-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .filter-controls {
+            display: flex;
+            gap: 15px;
+            flex: 1;
+            align-items: center;
+        }
+        
+        .filter-controls select, .filter-controls input {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+        }
+        
+        .brand-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .brand-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .brand-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+            border-color: #667eea;
+        }
+        
+        .brand-card.overdue {
+            border-color: #e53e3e;
+            background: linear-gradient(135deg, #fff 0%, #fee 100%);
+        }
+        
+        .brand-card.upcoming {
+            border-color: #f6ad55;
+            background: linear-gradient(135deg, #fff 0%, #fff5e6 100%);
+        }
+        
+        .brand-card.completed {
+            border-color: #48bb78;
+            background: linear-gradient(135deg, #fff 0%, #f0fff4 100%);
+        }
+        
+        .brand-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .brand-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-active {
+            background: #c6f6d5;
+            color: #276749;
+        }
+        
+        .status-pending {
+            background: #feebc8;
+            color: #7c2d12;
+        }
+        
+        .status-inactive {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+        
+        .recurring-badge {
+            background: #e0e7ff;
+            color: #3730a3;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            margin-left: 8px;
+        }
+        
+        .brand-details {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .detail-label {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .detail-value {
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            text-align: center;
+        }
+        
+        .btn-edit {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-edit:hover {
+            background: #5a67d8;
+        }
+        
+        .btn-delete {
+            background: #e53e3e;
+            color: white;
+        }
+        
+        .btn-delete:hover {
+            background: #c53030;
+        }
+        
+        .btn-analyze {
+            background: #48bb78;
+            color: white;
+        }
+        
+        .btn-analyze:hover {
+            background: #38a169;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal h2 {
+            color: #333;
+            font-size: 1.5rem;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        
+        .calendar-view {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .calendar-nav {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .nav-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .nav-btn:hover {
+            background: #5a67d8;
+        }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+        }
+        
+        .calendar-day {
+            aspect-ratio: 1;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 8px;
+            font-size: 12px;
+            position: relative;
+            background: #fafafa;
+            overflow: hidden;
+        }
+        
+        .calendar-day.monday {
+            border-left: 3px solid #667eea;
+        }
+        
+        .calendar-day.has-analysis {
+            background: #e6fffa;
+            border-color: #48bb78;
+        }
+        
+        .calendar-day.high-volume {
+            background: #fee;
+            border-color: #e53e3e;
+        }
+        
+        .day-number {
+            font-weight: 600;
+            color: #666;
+        }
+        
+        .day-count {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        
+        .day-count.warning {
+            background: #e53e3e;
+        }
+        
+        .day-brands {
+            margin-top: 4px;
+            font-size: 10px;
+            color: #333;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .week-summary {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 8px;
+        }
+        
+        .week-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        
+        .week-item {
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .week-item.high-volume {
+            background: #fee;
+            border-color: #e53e3e;
+        }
+        
+        .week-header {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        .week-count {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .week-count.warning {
+            color: #e53e3e;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .brand-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+            
+            .filter-controls {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .filter-controls select, .filter-controls input {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Fill Analysis Scheduler</h1>
+        <p class="subtitle">Track and manage fill analysis schedules for all brand programs (Weekly basis - Mondays)</p>
+        
+        <div class="controls">
+            <button class="add-brand-btn" onclick="openAddModal()">+ Add New Brand</button>
+            <div class="filter-controls">
+                <select id="statusFilter" onchange="filterBrands()">
+                    <option value="all">All Statuses</option>
+                    <option value="overdue">Overdue</option>
+                    <option value="upcoming">Upcoming</option>
+                    <option value="completed">Recently Completed</option>
+                </select>
+                <select id="renewalFilter" onchange="filterBrands()">
+                    <option value="all">All Renewals</option>
+                    <option value="active">Active</option>
+                    <option value="pending">Pending</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+                <input type="text" id="searchFilter" placeholder="Search brands..." onkeyup="filterBrands()">
+            </div>
+        </div>
+        
+        <div class="brand-grid" id="brandGrid"></div>
+        
+        <div class="calendar-view">
+            <div class="calendar-header">
+                <h2>Analysis Calendar</h2>
+                <div class="calendar-nav">
+                    <button class="nav-btn" onclick="changeMonth(-1)">← Previous</button>
+                    <select id="monthSelect" onchange="updateCalendar()">
+                        <option value="0">January</option>
+                        <option value="1">February</option>
+                        <option value="2">March</option>
+                        <option value="3">April</option>
+                        <option value="4">May</option>
+                        <option value="5">June</option>
+                        <option value="6">July</option>
+                        <option value="7">August</option>
+                        <option value="8">September</option>
+                        <option value="9">October</option>
+                        <option value="10">November</option>
+                        <option value="11">December</option>
+                    </select>
+                    <select id="yearSelect" onchange="updateCalendar()"></select>
+                    <button class="nav-btn" onclick="changeMonth(1)">Next →</button>
+                </div>
+            </div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+            <div class="week-summary" id="weekSummary"></div>
+        </div>
+    </div>
+    
+    <!-- Add/Edit Modal -->
+    <div class="modal" id="brandModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add New Brand</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="brandForm">
+                <div class="form-group">
+                    <label for="brandName">Brand Name</label>
+                    <input type="text" id="brandName" required>
+                </div>
+                <div class="form-group">
+                    <label for="launchDate">Program Launch Date</label>
+                    <input type="date" id="launchDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="messagesPerMonth">Approx. Messages per Month</label>
+                    <input type="number" id="messagesPerMonth" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="lastAnalysis">Date of Last Fill Analysis</label>
+                    <input type="date" id="lastAnalysis">
+                    <small style="color: #666;">Leave empty for first analysis</small>
+                </div>
+                <div class="form-group">
+                    <label for="renewalStatus">Program Renewal Status</label>
+                    <select id="renewalStatus" required>
+                        <option value="active">Active</option>
+                        <option value="pending">Pending</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Analysis Frequency</label>
+                    <select id="analysisFrequency" onchange="toggleScheduleOptions()">
+                        <option value="weekly">Weekly (Every Monday)</option>
+                        <option value="biweekly">Bi-weekly (Every 2 Mondays)</option>
+                        <option value="monthly">Monthly (First Monday)</option>
+                        <option value="quarterly">Quarterly (First Monday)</option>
+                    </select>
+                    <div id="customDateGroup" style="margin-top: 15px;">
+                        <label for="nextAnalysisDate">Next Analysis Monday</label>
+                        <select id="nextAnalysisDate" style="width: 100%;">
+                            <option value="">Automatic (based on frequency)</option>
+                        </select>
+                        <small style="color: #666; display: block; margin-top: 5px;">All analyses are scheduled on Mondays</small>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" style="background: #ccc;" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-edit">Save Brand</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        let brands = [];
+        let editingId = null;
+        let currentYear = new Date().getFullYear();
+        let currentMonth = new Date().getMonth();
+        
+        // Initialize year selector
+        function initializeYearSelector() {
+            const yearSelect = document.getElementById('yearSelect');
+            for (let year = currentYear - 1; year <= currentYear + 2; year++) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearSelect.appendChild(option);
+            }
+            yearSelect.value = currentYear;
+        }
+        
+        // Initialize with sample data
+        const sampleBrands = [
+            {
+                id: 1,
+                name: "Brand Alpha",
+                launchDate: "2024-01-15",
+                messagesPerMonth: 2500,
+                lastAnalysis: "2024-10-14",
+                renewalStatus: "active",
+                analysisFrequency: "weekly",
+                nextAnalysisDate: null
+            },
+            {
+                id: 2,
+                name: "Brand Beta",
+                launchDate: "2024-03-01",
+                messagesPerMonth: 1800,
+                lastAnalysis: null,
+                renewalStatus: "active",
+                analysisFrequency: "biweekly",
+                nextAnalysisDate: null
+            },
+            {
+                id: 3,
+                name: "Brand Gamma",
+                launchDate: "2023-11-20",
+                messagesPerMonth: 3200,
+                lastAnalysis: "2024-11-18",
+                renewalStatus: "pending",
+                analysisFrequency: "quarterly",
+                nextAnalysisDate: "2025-02-03"
+            }
+        ];
+        
+        // Load brands from localStorage or use sample data
+        function loadBrands() {
+            const stored = localStorage.getItem('fillAnalysisBrands');
+            brands = stored ? JSON.parse(stored) : sampleBrands;
+            // Migrate old data
+            brands = brands.map(brand => ({
+                ...brand,
+                analysisFrequency: brand.analysisFrequency || (brand.recurringMonthly ? 'monthly' : 'quarterly')
+            }));
+            renderBrands();
+            updateCalendar();
+        }
+        
+        // Save brands to localStorage
+        function saveBrands() {
+            localStorage.setItem('fillAnalysisBrands', JSON.stringify(brands));
+        }
+        
+        // Get the next Monday from a given date
+        function getNextMonday(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            const diff = day === 0 ? 1 : (8 - day) % 7 || 7;
+            d.setDate(d.getDate() + diff);
+            return d;
+        }
+        
+        // Get the first Monday of a month
+        function getFirstMonday(year, month) {
+            const firstDay = new Date(year, month, 1);
+            return getNextMonday(new Date(year, month, 1 - firstDay.getDay()));
+        }
+        
+        // Calculate next analysis date based on frequency
+        function getNextAnalysisDate(brand) {
+            // If custom date is set and it's in the future, use it
+            if (brand.nextAnalysisDate) {
+                const customDate = new Date(brand.nextAnalysisDate);
+                if (customDate > new Date()) {
+                    return customDate;
+                }
+            }
+            
+            const baseDate = brand.lastAnalysis ? new Date(brand.lastAnalysis) : new Date(brand.launchDate);
+            let nextDate;
+            
+            switch (brand.analysisFrequency) {
+                case 'weekly':
+                    nextDate = new Date(baseDate);
+                    nextDate.setDate(nextDate.getDate() + 7);
+                    return getNextMonday(nextDate);
+                    
+                case 'biweekly':
+                    nextDate = new Date(baseDate);
+                    nextDate.setDate(nextDate.getDate() + 14);
+                    return getNextMonday(nextDate);
+                    
+                case 'monthly':
+                    nextDate = new Date(baseDate);
+                    nextDate.setMonth(nextDate.getMonth() + 1);
+                    return getFirstMonday(nextDate.getFullYear(), nextDate.getMonth());
+                    
+                case 'quarterly':
+                default:
+                    nextDate = new Date(baseDate);
+                    nextDate.setMonth(nextDate.getMonth() + 3);
+                    return getFirstMonday(nextDate.getFullYear(), nextDate.getMonth());
+            }
+        }
+        
+        // Get all Monday dates in a month
+        function getMondaysInMonth(year, month) {
+            const mondays = [];
+            const date = new Date(year, month, 1);
+            
+            // Find first Monday
+            while (date.getDay() !== 1) {
+                date.setDate(date.getDate() + 1);
+            }
+            
+            // Get all Mondays in the month
+            while (date.getMonth() === month) {
+                mondays.push(new Date(date));
+                date.setDate(date.getDate() + 7);
+            }
+            
+            return mondays;
+        }
+        
+        // Get week number in month for a date
+        function getWeekOfMonth(date) {
+            const firstMonday = getFirstMonday(date.getFullYear(), date.getMonth());
+            return Math.floor((date.getDate() - firstMonday.getDate()) / 7) + 1;
+        }
+        
+        // Check if analysis should occur on this Monday
+        function shouldAnalyzeOnMonday(brand, monday) {
+            const lastAnalysis = brand.lastAnalysis ? new Date(brand.lastAnalysis) : new Date(brand.launchDate);
+            
+            if (monday <= lastAnalysis) return false;
+            
+            switch (brand.analysisFrequency) {
+                case 'weekly':
+                    return true;
+                    
+                case 'biweekly':
+                    const weeksSince = Math.floor((monday - lastAnalysis) / (7 * 24 * 60 * 60 * 1000));
+                    return weeksSince > 0 && weeksSince % 2 === 0;
+                    
+                case 'monthly':
+                    return getWeekOfMonth(monday) === 1;
+                    
+                case 'quarterly':
+                    // Check if it's the first Monday of a quarter month
+                    const quarterMonths = [0, 3, 6, 9]; // Jan, Apr, Jul, Oct
+                    return getWeekOfMonth(monday) === 1 && quarterMonths.includes(monday.getMonth());
+                    
+                default:
+                    return false;
+            }
+        }
+        
+        // Get analysis status
+        function getAnalysisStatus(brand) {
+            const today = new Date();
+            const nextAnalysis = getNextAnalysisDate(brand);
+            const daysUntil = Math.ceil((nextAnalysis - today) / (1000 * 60 * 60 * 24));
+            
+            if (daysUntil < 0) return 'overdue';
+            if (daysUntil <= 7) return 'upcoming';
+            return 'completed';
+        }
+        
+        // Render brands
+        function renderBrands() {
+            const grid = document.getElementById('brandGrid');
+            const filteredBrands = getFilteredBrands();
+            
+            grid.innerHTML = filteredBrands.map(brand => {
+                const status = getAnalysisStatus(brand);
+                const nextAnalysis = getNextAnalysisDate(brand);
+                const daysUntil = Math.ceil((nextAnalysis - new Date()) / (1000 * 60 * 60 * 24));
+                
+                const frequencyLabels = {
+                    'weekly': 'Weekly',
+                    'biweekly': 'Bi-weekly',
+                    'monthly': 'Monthly',
+                    'quarterly': 'Quarterly'
+                };
+                
+                return `
+                    <div class="brand-card ${status}">
+                        <div class="brand-header">
+                            <div>
+                                <span class="brand-name">${brand.name}</span>
+                                <span class="recurring-badge">${frequencyLabels[brand.analysisFrequency]}</span>
+                            </div>
+                            <div class="status-badge status-${brand.renewalStatus}">${brand.renewalStatus}</div>
+                        </div>
+                        <div class="brand-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Launch Date:</span>
+                                <span class="detail-value">${formatDate(brand.launchDate)}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Monthly Messages:</span>
+                                <span class="detail-value">${brand.messagesPerMonth.toLocaleString()}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Last Analysis:</span>
+                                <span class="detail-value">${brand.lastAnalysis ? formatDate(brand.lastAnalysis) : 'First Analysis'}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Next Analysis:</span>
+                                <span class="detail-value" style="color: ${daysUntil < 0 ? '#e53e3e' : daysUntil <= 7 ? '#f6ad55' : '#48bb78'}">
+                                    ${formatDate(nextAnalysis)} (${Math.abs(daysUntil)} days ${daysUntil < 0 ? 'overdue' : 'away'})
+                                </span>
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-edit" onclick="editBrand(${brand.id})">Edit</button>
+                            <button class="btn btn-analyze" onclick="markAnalyzed(${brand.id})">Mark Analyzed</button>
+                            <button class="btn btn-delete" onclick="deleteBrand(${brand.id})">Delete</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Filter brands
+        function getFilteredBrands() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const renewalFilter = document.getElementById('renewalFilter').value;
+            const searchFilter = document.getElementById('searchFilter').value.toLowerCase();
+            
+            return brands.filter(brand => {
+                const status = getAnalysisStatus(brand);
+                
+                if (statusFilter !== 'all' && status !== statusFilter) return false;
+                if (renewalFilter !== 'all' && brand.renewalStatus !== renewalFilter) return false;
+                if (searchFilter && !brand.name.toLowerCase().includes(searchFilter)) return false;
+                
+                return true;
+            });
+        }
+        
+        function filterBrands() {
+            renderBrands();
+        }
+        
+        // Format date
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            return `${days[date.getDay()]}, ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+        }
+        
+        // Toggle schedule options
+        function toggleScheduleOptions() {
+            populateNextAnalysisOptions();
+        }
+        
+        // Populate next analysis date options (Mondays only)
+        function populateNextAnalysisOptions() {
+            const select = document.getElementById('nextAnalysisDate');
+            const frequency = document.getElementById('analysisFrequency').value;
+            select.innerHTML = '<option value="">Automatic (based on frequency)</option>';
+            
+            // Add Monday options for the next 3 months
+            const today = new Date();
+            let currentDate = getNextMonday(today);
+            
+            for (let i = 0; i < 12; i++) {
+                const option = document.createElement('option');
+                option.value = currentDate.toISOString().split('T')[0];
+                option.textContent = formatDate(currentDate);
+                select.appendChild(option);
+                
+                // Move to next Monday
+                currentDate = new Date(currentDate);
+                currentDate.setDate(currentDate.getDate() + 7);
+            }
+        }
+        
+        // Change calendar month
+        function changeMonth(direction) {
+            const monthSelect = document.getElementById('monthSelect');
+            const yearSelect = document.getElementById('yearSelect');
+            
+            let month = parseInt(monthSelect.value) + direction;
+            let year = parseInt(yearSelect.value);
+            
+            if (month < 0) {
+                month = 11;
+                year--;
+            } else if (month > 11) {
+                month = 0;
+                year++;
+            }
+            
+            monthSelect.value = month;
+            yearSelect.value = year;
+            updateCalendar();
+        }
+        
+        // Update calendar
+        function updateCalendar() {
+            const monthSelect = document.getElementById('monthSelect');
+            const yearSelect = document.getElementById('yearSelect');
+            const month = parseInt(monthSelect.value);
+            const year = parseInt(yearSelect.value);
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const calendarGrid = document.getElementById('calendarGrid');
+            
+            // Clear calendar
+            calendarGrid.innerHTML = '';
+            
+            // Add day headers
+            const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            dayHeaders.forEach(day => {
+                const header = document.createElement('div');
+                header.style.fontWeight = '600';
+                header.style.textAlign = 'center';
+                header.style.padding = '10px';
+                header.textContent = day;
+                calendarGrid.appendChild(header);
+            });
+            
+            // Add empty cells for days before month starts
+            for (let i = 0; i < firstDay.getDay(); i++) {
+                const emptyDay = document.createElement('div');
+                calendarGrid.appendChild(emptyDay);
+            }
+            
+            // Get all Mondays in the month
+            const mondays = getMondaysInMonth(year, month);
+            const weekAnalyses = {};
+            
+            // Count analyses for each Monday
+            mondays.forEach((monday, weekIndex) => {
+                const brandsThisWeek = brands.filter(brand => {
+                    const nextAnalysis = getNextAnalysisDate(brand);
+                    return nextAnalysis.toDateString() === monday.toDateString() ||
+                           (brand.analysisFrequency && shouldAnalyzeOnMonday(brand, monday));
+                });
+                
+                if (brandsThisWeek.length > 0) {
+                    weekAnalyses[weekIndex] = brandsThisWeek;
+                }
+            });
+            
+            // Add days of month
+            for (let day = 1; day <= lastDay.getDate(); day++) {
+                const date = new Date(year, month, day);
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'calendar-day';
+                
+                // Mark Mondays
+                if (date.getDay() === 1) {
+                    dayDiv.classList.add('monday');
+                }
+                
+                const dayNumber = document.createElement('div');
+                dayNumber.className = 'day-number';
+                dayNumber.textContent = day;
+                dayDiv.appendChild(dayNumber);
+                
+                // Check if this is a Monday with analyses
+                const mondayIndex = mondays.findIndex(m => m.getDate() === day);
+                if (mondayIndex !== -1 && weekAnalyses[mondayIndex]) {
+                    const count = weekAnalyses[mondayIndex].length;
+                    dayDiv.classList.add(count > 8 ? 'high-volume' : 'has-analysis');
+                    
+                    // Add count badge
+                    const countBadge = document.createElement('div');
+                    countBadge.className = count > 8 ? 'day-count warning' : 'day-count';
+                    countBadge.textContent = count;
+                    countBadge.title = count > 8 ? 'Warning: More than 8 analyses scheduled!' : '';
+                    dayDiv.appendChild(countBadge);
+                    
+                    // Add brand list
+                    const brandList = document.createElement('div');
+                    brandList.className = 'day-brands';
+                    const brandNames = weekAnalyses[mondayIndex].map(b => b.name);
+                    brandList.textContent = brandNames.slice(0, 2).join(', ');
+                    if (brandNames.length > 2) {
+                        brandList.textContent += `... +${brandNames.length - 2}`;
+                    }
+                    brandList.title = brandNames.join('\n');
+                    dayDiv.appendChild(brandList);
+                }
+                
+                calendarGrid.appendChild(dayDiv);
+            }
+            
+            // Update week summary
+            updateWeekSummary(mondays, weekAnalyses);
+        }
+        
+        // Update week summary
+        function updateWeekSummary(mondays, weekAnalyses) {
+            const summaryDiv = document.getElementById('weekSummary');
+            
+            const weekItems = mondays.map((monday, index) => {
+                const count = weekAnalyses[index] ? weekAnalyses[index].length : 0;
+                const weekNum = getWeekOfMonth(monday);
+                
+                return `
+                    <div class="week-item ${count > 8 ? 'high-volume' : ''}">
+                        <div class="week-header">Week ${weekNum} (${formatDate(monday).split(',')[1].trim()})</div>
+                        <div class="week-count ${count > 8 ? 'warning' : ''}">${count} analyses</div>
+                    </div>
+                `;
+            }).join('');
+            
+            summaryDiv.innerHTML = `
+                <h3 style="margin-bottom: 15px; color: #333;">Weekly Analysis Summary</h3>
+                <div class="week-grid">${weekItems}</div>
+            `;
+        }
+        
+        // Modal functions
+        function openAddModal() {
+            editingId = null;
+            document.getElementById('modalTitle').textContent = 'Add New Brand';
+            document.getElementById('brandForm').reset();
+            document.getElementById('analysisFrequency').value = 'quarterly';
+            populateNextAnalysisOptions();
+            document.getElementById('brandModal').style.display = 'flex';
+        }
+        
+        function editBrand(id) {
+            const brand = brands.find(b => b.id === id);
+            if (!brand) return;
+            
+            editingId = id;
+            document.getElementById('modalTitle').textContent = 'Edit Brand';
+            document.getElementById('brandName').value = brand.name;
+            document.getElementById('launchDate').value = brand.launchDate;
+            document.getElementById('messagesPerMonth').value = brand.messagesPerMonth;
+            document.getElementById('lastAnalysis').value = brand.lastAnalysis || '';
+            document.getElementById('renewalStatus').value = brand.renewalStatus;
+            document.getElementById('analysisFrequency').value = brand.analysisFrequency || 'quarterly';
+            populateNextAnalysisOptions();
+            document.getElementById('nextAnalysisDate').value = brand.nextAnalysisDate || '';
+            document.getElementById('brandModal').style.display = 'flex';
+        }
+        
+        function closeModal() {
+            document.getElementById('brandModal').style.display = 'none';
+            editingId = null;
+        }
+        
+        function deleteBrand(id) {
+            if (confirm('Are you sure you want to delete this brand?')) {
+                brands = brands.filter(b => b.id !== id);
+                saveBrands();
+                renderBrands();
+                updateCalendar();
+            }
+        }
+        
+        function markAnalyzed(id) {
+            const brand = brands.find(b => b.id === id);
+            if (brand) {
+                // Set last analysis to the most recent Monday
+                const today = new Date();
+                const lastMonday = new Date(today);
+                const daysSinceMonday = (today.getDay() + 6) % 7;
+                lastMonday.setDate(today.getDate() - daysSinceMonday);
+                
+                brand.lastAnalysis = lastMonday.toISOString().split('T')[0];
+                brand.nextAnalysisDate = null; // Clear custom date
+                saveBrands();
+                renderBrands();
+                updateCalendar();
+            }
+        }
+        
+        // Form submission
+        document.getElementById('brandForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const brandData = {
+                name: document.getElementById('brandName').value,
+                launchDate: document.getElementById('launchDate').value,
+                messagesPerMonth: parseInt(document.getElementById('messagesPerMonth').value),
+                lastAnalysis: document.getElementById('lastAnalysis').value || null,
+                renewalStatus: document.getElementById('renewalStatus').value,
+                analysisFrequency: document.getElementById('analysisFrequency').value,
+                nextAnalysisDate: document.getElementById('nextAnalysisDate').value || null
+            };
+            
+            if (editingId) {
+                const index = brands.findIndex(b => b.id === editingId);
+                brands[index] = { ...brands[index], ...brandData };
+            } else {
+                brandData.id = Date.now();
+                brands.push(brandData);
+            }
+            
+            saveBrands();
+            renderBrands();
+            updateCalendar();
+            closeModal();
+        });
+        
+        // Initialize
+        initializeYearSelector();
+        document.getElementById('monthSelect').value = currentMonth;
+        document.getElementById('yearSelect').value = currentYear;
+        loadBrands();
+    </script>
+</body>
+</html>
